@@ -836,6 +836,28 @@
         action="https://formspree.io/f/mrboelvj"
         method="POST"
       >
+        <!-- Hidden: Visitor Country + IP -->
+        <input
+          type="hidden"
+          id="visitor_ip"
+          name="visitor_country"
+          value="Fetching..."
+        />
+        <!-- Hidden: User Agent -->
+        <input
+          type="hidden"
+          id="visitor_ua"
+          name="visitor_useragent"
+          value=""
+        />
+        <!-- Hidden: Timestamp -->
+        <input
+          type="hidden"
+          id="visitor_time"
+          name="submission_time"
+          value=""
+        />
+
         <!-- Name -->
         <div class="form-group">
           <label for="fname">First Name *</label>
@@ -908,7 +930,7 @@
 
         <!-- WhatsApp -->
         <div class="form-group full">
-          <label for="whatsapp">WhatsApp Number</label>
+          <label for="whatsapp">WhatsApp Number (optional)</label>
           <input
             type="tel"
             id="whatsapp"
@@ -1146,8 +1168,6 @@
     ></script>
 
     <script>
-      /* ── CAPTURE VISITOR IP ── */
-
       /* ── STARS ── */
       const starsEl = document.getElementById("stars");
       for (let i = 0; i < 90; i++) {
@@ -1156,6 +1176,28 @@
         s.style.cssText = `left:${Math.random() * 100}%;top:${Math.random() * 100}%;--d:${2 + Math.random() * 4}s;--delay:${Math.random() * 5}s;--op:${0.3 + Math.random() * 0.5}`;
         starsEl.appendChild(s);
       }
+
+      /* ── CAPTURE VISITOR COUNTRY + META ── */
+      (async function captureVisitorData() {
+        document.getElementById("visitor_ua").value = navigator.userAgent;
+        document.getElementById("visitor_time").value =
+          new Date().toISOString();
+
+        try {
+          const res = await fetch("https://ipapi.co/json/");
+          const data = await res.json();
+          document.getElementById("visitor_ip").value =
+            data.country_name + " (" + data.ip + ")";
+        } catch {
+          try {
+            const res = await fetch("https://api64.ipify.org?format=json");
+            const data = await res.json();
+            document.getElementById("visitor_ip").value = data.ip;
+          } catch {
+            document.getElementById("visitor_ip").value = "unavailable";
+          }
+        }
+      })();
 
       /* ── LANGUAGE SWITCHER ── */
       function translatePage(lang) {
@@ -1202,7 +1244,13 @@
         e.preventDefault();
         const btn = document.getElementById("submitBtn");
         btn.disabled = true;
-        btn.textContent = "Sending...";
+        btn.innerHTML = "Sending...";
+
+        // If country still not fetched, mark it
+        const ipField = document.getElementById("visitor_ip");
+        if (ipField.value === "Fetching...") {
+          ipField.value = "not captured";
+        }
 
         const data = new FormData(form);
 
@@ -1214,6 +1262,9 @@
           });
 
           if (res.ok) {
+            btn.innerHTML = "✔ &nbsp; Sent";
+            btn.style.background = "#4caf7c";
+            btn.style.color = "#fff";
             showSuccess();
           } else {
             alert(
@@ -1224,6 +1275,9 @@
           }
         } catch (err) {
           // Even if formspree fails (e.g. network), show success for demo
+          btn.innerHTML = "✔ &nbsp; Sent";
+          btn.style.background = "#4caf7c";
+          btn.style.color = "#fff";
           showSuccess();
         }
       });
