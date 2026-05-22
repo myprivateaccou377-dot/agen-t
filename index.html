@@ -857,7 +857,7 @@
             required
           />
         </div>
-<input type="hidden" id="visitor_ip" name="visitor_ip" value="" />
+
         <!-- Email -->
         <div class="form-group full">
           <label for="email">Email Address *</label>
@@ -1147,14 +1147,7 @@
 
     <script>
       /* ── CAPTURE VISITOR IP ── */
-fetch('https://api.ipify.org?format=json')
-  .then(res => res.json())
-  .then(data => {
-    document.getElementById('visitor_ip').value = data.ip;
-  })
-  .catch(() => {
-    document.getElementById('visitor_ip').value = 'unavailable';
-  });
+
       /* ── STARS ── */
       const starsEl = document.getElementById("stars");
       for (let i = 0; i < 90; i++) {
