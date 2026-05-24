@@ -1082,7 +1082,7 @@
       </p>
     </footer>
 
-    <!-- SUCCESS SCREEN (also reveals chat) -->
+    <!-- SUCCESS SCREEN -->
     <div id="success-screen">
       <div class="success-card">
         <button class="close-success" onclick="closeSuccess()">✕</button>
@@ -1129,14 +1129,55 @@
       </div>
     </div>
 
-    <!-- Tawk.to (hidden until success) -->
+    <!-- Tawk.to — always visible, greets visitor by name when available -->
     <script type="text/javascript">
-      // Load Tawk.to but keep widget hidden initially
       var Tawk_API = Tawk_API || {};
       var Tawk_LoadStart = new Date();
+
+      // Once Tawk.to is ready, set visitor name + send automated greeting
       Tawk_API.onLoad = function () {
-        Tawk_API.hideWidget(); // hide on load
+        // Try to get name from form if already filled in
+        var firstName = (document.getElementById("fname") || {}).value || "";
+        var lastName = (document.getElementById("lname") || {}).value || "";
+        var fullName = (firstName + " " + lastName).trim();
+
+        if (fullName) {
+          Tawk_API.setAttributes({ name: fullName }, function (err) {});
+        }
+
+        // Send an automated chat message so the visitor sees it immediately
+        var greeting = fullName
+          ? "Hi " +
+            fullName +
+            "! 👋 Your message has been seen. We'll get back to you shortly if we're available."
+          : "Hi there! 👋 Your message has been seen. We'll get back to you shortly if we're available.";
+
+        Tawk_API.sendMessage(greeting);
       };
+
+      // If the form is submitted, update the visitor name in Tawk before success screen
+      document.addEventListener("DOMContentLoaded", function () {
+        var bookingForm = document.getElementById("bookingForm");
+        if (bookingForm) {
+          bookingForm.addEventListener(
+            "submit",
+            function () {
+              var fn = (document.getElementById("fname") || {}).value || "";
+              var ln = (document.getElementById("lname") || {}).value || "";
+              var name = (fn + " " + ln).trim();
+              if (
+                name &&
+                typeof Tawk_API !== "undefined" &&
+                Tawk_API.setAttributes
+              ) {
+                Tawk_API.setAttributes({ name: name }, function (err) {});
+              }
+            },
+            true,
+          ); // capture phase so it runs before the submit handler
+        }
+      });
+
       (function () {
         var s1 = document.createElement("script"),
           s0 = document.getElementsByTagName("script")[0];
@@ -1232,7 +1273,6 @@
         );
         const typed = document.getElementById("celebInput").value.trim();
         const existing = typed ? [typed] : [];
-        // merge chip names not already in typed
         const all = [...new Set([...existing, ...selected])];
         if (all.length)
           document.getElementById("celebInput").value = all.join(", ");
@@ -1246,7 +1286,6 @@
         btn.disabled = true;
         btn.innerHTML = "Sending...";
 
-        // If country still not fetched, mark it
         const ipField = document.getElementById("visitor_ip");
         if (ipField.value === "Fetching...") {
           ipField.value = "not captured";
@@ -1274,7 +1313,6 @@
             btn.innerHTML = "✦ &nbsp; Submit Booking Request";
           }
         } catch (err) {
-          // Even if formspree fails (e.g. network), show success for demo
           btn.innerHTML = "✔ &nbsp; Sent";
           btn.style.background = "#4caf7c";
           btn.style.color = "#fff";
@@ -1290,17 +1328,12 @@
       function closeSuccess() {
         document.getElementById("success-screen").classList.remove("show");
         document.body.style.overflow = "";
-        // reveal Tawk.to chat now
-        if (typeof Tawk_API !== "undefined") {
-          Tawk_API.showWidget();
-        }
       }
 
       function openChat() {
         closeSuccess();
         setTimeout(() => {
           if (typeof Tawk_API !== "undefined") {
-            Tawk_API.showWidget();
             Tawk_API.maximize();
           }
         }, 300);
